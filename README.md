@@ -13,7 +13,7 @@ This library is zero dependency. so this can be installed via git submodule or a
 
 ## TO-DOs
 - [ ] Publish for Roblox
-- [ ] Add docs through moonwave
+- [ ] Add docs through moonwave (Generate into markdown and publish)
 
 ## Credits
 - [Sleitnick/RbxUtil/TableUtil](https://github.com/Sleitnick/RbxUtil/blob/main/modules/table-util/init.luau) - Original table utility functions
