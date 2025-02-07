@@ -8,6 +8,9 @@ pesde add caveful_games/table_helper
 pesde install
 ```
 
+### Note
+This library is zero dependency. so this can be installed via git submodule or also vendoring works fine.
+
 ## TO-DOs
 - [ ] Publish for Roblox
 
