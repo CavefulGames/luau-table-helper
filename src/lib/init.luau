@@ -11,7 +11,10 @@ export type Deleted<T> = Deleted.Deleted<T>
 	@prop Store
 	@prop Deleted
 
-	A collection of helpful table utility functions. Many of these functions are carried over from JavaScript or
+	# [table-helper-luau](https://pesde.dev/packages/caveful_games/table_helper)
+	A collection of helpful table utility functions extending [TableUtil](https://sleitnick.github.io/RbxUtil/api/TableUtil/) from [RbxUtil](https://github.com/Sleitnick/RbxUtil) for luau
+
+	Many of these functions are carried over from JavaScript or
 	Python that are not present in Lua.
 
 	Tables that only work specifically with arrays or dictionaries are marked as such in the documentation.
