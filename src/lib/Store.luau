@@ -1,5 +1,3 @@
--- local gt = require(script.Parent.Parent.roblox_packages.greentea)
-
 export type Store<T, K = any> = ((key: K) -> T) & {
 	[K]: T,
 	constructor: () -> T,
@@ -25,6 +23,15 @@ export type Store<T, K = any> = ((key: K) -> T) & {
 ]=]
 type StoreImpl = {
 	__index: StoreImpl,
+	--[=[
+		@within Store
+
+		Constructs a new value for the given key. Gets the value if it already exists.
+
+		```lua
+		local value = store("storeKey")
+		```
+	]=]
 	__call: <T, K>(self: Store<T, K>, key: K) -> T,
 	--[=[
 		@within Store
@@ -59,7 +66,7 @@ function Store.__call(self, key)
 	if self.filter then
 		local filteredKey = self.filter(key)
 		if not filteredKey then
-			error(`Store filter returned nil, which means the key('{key}') is invalid`)
+			error(`Store filter returned 'nil', which means the key('{key}') is invalid`)
 		end
 		key = filteredKey
 	end

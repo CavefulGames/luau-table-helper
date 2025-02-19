@@ -1,11 +1,15 @@
 local Store = require("./Store")
+local Deleted = require("./Deleted")
 
 local inext = ipairs({})
 
 export type Store<T, K> = Store.Store<T, K>
+export type Deleted<T> = Deleted.Deleted<T>
 
 --[=[
 	@class tableHelper
+	@prop Store
+	@prop Deleted
 
 	A collection of helpful table utility functions. Many of these functions are carried over from JavaScript or
 	Python that are not present in Lua.
@@ -959,6 +963,7 @@ local function isEmpty(tbl: { any }): boolean
 end
 
 tableHelper.Store = Store
+tableHelper.Deleted = Deleted
 tableHelper.copy = copy
 tableHelper.sync = sync
 tableHelper.reconcile = reconcile
