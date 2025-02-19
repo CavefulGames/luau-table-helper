@@ -12,6 +12,8 @@ export type Deleted<T> = typeof(setmetatable(
 
 	Makes an object that throws an error when a method is called on it.
 
+	Heavily inspired by `errorTable` in [ffrostfall's luausignal](https://github.com/ffrostfall/luausignal/blob/77d6d8ace5809c5f3bd8b3417472a7130fd82c80/src/init.luau#L213)
+
 	```lua
 	local Class = {}
 	Class.__index = Class
