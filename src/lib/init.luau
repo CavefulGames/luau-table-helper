@@ -167,7 +167,20 @@ function tableHelper.get(t: {}, path: { any }): any?
 	return current[path[#path]]
 end
 
+--[=[
+	@within tableHelper
+
+	You can disable strict tables by setting this to `false`.
+
+	Recommended to use with `_G.__DEV__`.
+
+	```lua
+	tableHelper.strictEnabled = false
+	tableHelper.strictEnabled = _G.__DEV__ -- To disable strict tables in production
+	```
+]=]
 tableHelper.strictEnabled = true
+
 --[=[
 	@within tableHelper
 
@@ -232,6 +245,22 @@ type TypeNameOrChecker = ("string"
 | string
 | (value: any) -> boolean)?
 
+--[=[
+	@within tableHelper
+
+	Marks a value as mutable in a strict table. This is useful for strict tables where you want to allow certain values to be mutated.
+
+	```lua
+	local t = tableHelper.strict({
+		count = 0,
+		message = tableHelper.mut("hello"),
+		notInitializedThing = tableHelper.mut(nil, "string") :: string,
+		cave = tableHelper.mut(Cave.new(), Cave.is) :: Cave,
+	})
+
+	t.message = "world" -- You can mutate this now!
+	```
+]=]
 tableHelper.mut = function(
 	value: any,
 	typeNameOrChecker: TypeNameOrChecker
