@@ -25,7 +25,7 @@ export type Deleted<T> = Deleted.Deleted<T>
 	Tables that only work specifically with arrays or dictionaries are marked as such in the documentation.
 
 	:::info Immutability
-	All functions (_except_ `SwapRemove`, `SwapRemoveFirstValue`, and `Lock`) treat tables as immutable and will return
+	All functions (_except_ `swapRemove`, `swapRemoveFirstValue`, and `lock`) treat tables as immutable and will return
 	copies of the given table(s) with the operations performed on the copies.
 	:::
 ]=]
