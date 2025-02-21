@@ -215,15 +215,15 @@ function tableHelper.strict<T>(tbl: T, name: string?): T
 		return tbl
 	end
 
--- 	local traceback = debug.traceback()
--- 	local err = function()
--- 		return error(
--- 			`Attempted to access the strict table '{name}' incorrectly.\
--- This strict table was created at '{traceback}'.\
--- Ensure you are not trying to mutate an immutable field or access an invalid key.`,
--- 			2
--- 		)
--- 	end
+	-- 	local traceback = debug.traceback()
+	-- 	local err = function()
+	-- 		return error(
+	-- 			`Attempted to access the strict table '{name}' incorrectly.\
+	-- This strict table was created at '{traceback}'.\
+	-- Ensure you are not trying to mutate an immutable field or access an invalid key.`,
+	-- 			2
+	-- 		)
+	-- 	end
 
 	return setmetatable({
 		[privateKey] = tbl,
@@ -232,18 +232,20 @@ function tableHelper.strict<T>(tbl: T, name: string?): T
 	}, StrictTable) :: any -- lying to the type checker :D
 end
 
-type TypeNameOrChecker = ("string"
-| "number"
-| "boolean"
-| "table"
-| "function"
-| "nil"
-| "thread"
-| "userdata"
-| "buffer"
-| "vector"
-| string
-| (value: any) -> boolean)?
+type TypeNameOrChecker = (
+	"string"
+	| "number"
+	| "boolean"
+	| "table"
+	| "function"
+	| "nil"
+	| "thread"
+	| "userdata"
+	| "buffer"
+	| "vector"
+	| string
+	| (value: any) -> boolean
+)?
 
 --[=[
 	@within tableHelper
@@ -261,10 +263,7 @@ type TypeNameOrChecker = ("string"
 	t.message = "world" -- You can mutate this now!
 	```
 ]=]
-tableHelper.mut = function(
-	value: any,
-	typeNameOrChecker: TypeNameOrChecker
-): any
+tableHelper.mut = function(value: any, typeNameOrChecker: TypeNameOrChecker): any
 	if not tableHelper.strictEnabled then
 		return value
 	end

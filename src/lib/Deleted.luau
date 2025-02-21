@@ -62,7 +62,7 @@ type DeletedImpl = {
 		deleted:setmetatable(object)
 		```
 	]=]
-	setmetatable: <T>(self: Deleted<T>, constructed: T) -> ()
+	setmetatable: <T>(self: Deleted<T>, constructed: T) -> (),
 }
 
 local Deleted = {} :: DeletedImpl
@@ -82,7 +82,10 @@ function Deleted.setmetatable(self, constructed)
 		local newMt = table.clone(self.impl)
 		local traceback = getTraceback(nil, 2)
 		local err = function()
-			return error(`Attempt to call a method of a deleted object '{self.name}'\n'{self.name}' was deleted in '{traceback}' and this tableHelper.Deleted was declared in '{self.traceback}'`, 2)
+			return error(
+				`Attempt to call a method of a deleted object '{self.name}'\n'{self.name}' was deleted in '{traceback}' and this tableHelper.Deleted was declared in '{self.traceback}'`,
+				2
+			)
 		end
 
 		for key, value in newMt do

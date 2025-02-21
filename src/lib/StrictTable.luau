@@ -5,7 +5,10 @@ local tracebackPrivateKey = function() end
 
 local function errorUnauthorizedUse(self: StrictTable)
 	local name = self[namePrivateKey]
-	return error(`Unauthorized use of strict table '{name}'\nThis strict table({name}) was declared in '{tracebackPrivateKey}'`, 2)
+	return error(
+		`Unauthorized use of strict table '{name}'\nThis strict table({name}) was declared in '{tracebackPrivateKey}'`,
+		2
+	)
 end
 
 export type StrictTable = typeof(setmetatable(
@@ -37,7 +40,10 @@ function StrictTable.__index(self, key)
 	local tbl = self[privateKey]
 	local indexed: any = tbl[key]
 	if indexed == nil then
-		error(`Attempt to index an invalid member '{key}' of {name}\nThis strict table({name}) was declared in '{tracebackPrivateKey}'`, 2)
+		error(
+			`Attempt to index an invalid member '{key}' of {name}\nThis strict table({name}) was declared in '{tracebackPrivateKey}'`,
+			2
+		)
 	end
 	if type(indexed) == "table" and indexed[privateKey] then
 		return indexed.v
@@ -50,23 +56,40 @@ function StrictTable.__newindex(self, key, value)
 	local tbl = self[privateKey]
 	local indexed = tbl[key]
 	if indexed == nil then
-		error(`'{key}' is not a valid member of {name}\nThis strict table({name}) was declared in '{self[tracebackPrivateKey]}'`, 2)
+		error(
+			`'{key}' is not a valid member of {name}\nThis strict table({name}) was declared in '{self[tracebackPrivateKey]}'`,
+			2
+		)
 	end
 	if type(indexed) ~= "table" then
-		error(`Unable to mutate immutable property '{name}.{key}', as property '{key}' is not declared as mutable in {name}\nThis strict table({name}) was declared in '{self[tracebackPrivateKey]}'`, 2)
+		error(
+			`Unable to mutate immutable property '{name}.{key}', as property '{key}' is not declared as mutable in {name}\nThis strict table({name}) was declared in '{self[tracebackPrivateKey]}'`,
+			2
+		)
 	end
 	local mutableTypeNameOrTypeChecker = indexed[privateKey]
 	if mutableTypeNameOrTypeChecker then
 		local mutableTypeNameOrTypeCheckerType = type(mutableTypeNameOrTypeChecker)
 		if mutableTypeNameOrTypeCheckerType == "string" and typeof(value) ~= mutableTypeNameOrTypeChecker then
-			error(`Unable to mutate mutable property '{name}.{key}'. {mutableTypeNameOrTypeCheckerType} expected, got {typeof(value)}\nThis strict table({name}) was declared in '{self[tracebackPrivateKey]}'`, 2)
+			error(
+				`Unable to mutate mutable property '{name}.{key}'. {mutableTypeNameOrTypeCheckerType} expected, got {typeof(
+					value
+				)}\nThis strict table({name}) was declared in '{self[tracebackPrivateKey]}'`,
+				2
+			)
 		end
 		if mutableTypeNameOrTypeCheckerType == "function" and not mutableTypeNameOrTypeChecker(value) then
-			error(`TypeError while mutating property '{key}' of {name}, got {typeof(value)}\nThis strict table({name}) was declared in '{self[tracebackPrivateKey]}'`, 2)
+			error(
+				`TypeError while mutating property '{key}' of {name}, got {typeof(value)}\nThis strict table({name}) was declared in '{self[tracebackPrivateKey]}'`,
+				2
+			)
 		end
 		indexed.v = value
 	else
-		error(`Unable to mutate immutable property '{name}.{key}', as property '{key}' is not declared as mutable in {name}\nThis strict table({name}) was declared in '{self[tracebackPrivateKey]}'`, 2)
+		error(
+			`Unable to mutate immutable property '{name}.{key}', as property '{key}' is not declared as mutable in {name}\nThis strict table({name}) was declared in '{self[tracebackPrivateKey]}'`,
+			2
+		)
 	end
 end
 
