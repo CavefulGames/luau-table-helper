@@ -39,7 +39,7 @@ function StrictTable.__index(self, key)
 	if indexed == nil then
 		error(`Attempt to index an invalid member '{key}' of {name}\nThis strict table({name}) was declared in '{tracebackPrivateKey}'`, 2)
 	end
-	if indexed[privateKey] then
+	if type(indexed) == "table" and indexed[privateKey] then
 		return indexed.v
 	end
 	return indexed
@@ -51,6 +51,9 @@ function StrictTable.__newindex(self, key, value)
 	local indexed = tbl[key]
 	if indexed == nil then
 		error(`'{key}' is not a valid member of {name}\nThis strict table({name}) was declared in '{self[tracebackPrivateKey]}'`, 2)
+	end
+	if type(indexed) ~= "table" then
+		error(`Unable to mutate immutable property '{name}.{key}', as property '{key}' is not declared as mutable in {name}\nThis strict table({name}) was declared in '{self[tracebackPrivateKey]}'`, 2)
 	end
 	local mutableTypeNameOrTypeChecker = indexed[privateKey]
 	if mutableTypeNameOrTypeChecker then

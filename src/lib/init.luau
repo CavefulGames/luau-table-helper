@@ -2,6 +2,7 @@ local Store = require("./Store")
 local Deleted = require("./Deleted")
 local privateKey = require("./privateKey")
 local StrictTable = require("./StrictTable")
+local getTraceback = require("./getTraceback")
 
 local inext = ipairs({})
 local namePrivateKey = StrictTable[privateKey][1]
@@ -166,6 +167,7 @@ function tableHelper.get(t: {}, path: { any }): any?
 	return current[path[#path]]
 end
 
+tableHelper.strictEnabled = true
 --[=[
 	@within tableHelper
 
@@ -183,13 +185,15 @@ end
 	t.message = 10 -- Not allowed
 	```
 ]=]
-function tableHelper.strict<T>(tbl: T, name: string): T
+function tableHelper.strict<T>(tbl: T, name: string?): T
 	if type(tbl) ~= "table" then
 		error(`First argument must be a table, got {typeof(tbl)}`)
 	end
-	if type(name) ~= "string" then
-		error(`Second argument must be a string, got {typeof(name)}`)
+	if name ~= nil and type(name) ~= "string" then
+		error(`Second argument must be a string or nil, got {typeof(name)}`)
 	end
+	-- selene: allow(shadowing)
+	local name = name or "*no-name*"
 	-- if getmetatable(tbl) ~= nil then
 	-- 	error("A table with a metatable cannot be a strict table")
 	-- end
@@ -211,38 +215,40 @@ function tableHelper.strict<T>(tbl: T, name: string): T
 	return setmetatable({
 		[privateKey] = tbl,
 		[namePrivateKey] = name :: any,
-		[tracebackPrivateKey] = debug.traceback(nil, 2) :: any,
+		[tracebackPrivateKey] = getTraceback(nil, 2) :: any,
 	}, StrictTable) :: any -- lying to the type checker :D
 end
 
-function tableHelper.mut(
+type TypeNameOrChecker = ("string"
+| "number"
+| "boolean"
+| "table"
+| "function"
+| "nil"
+| "thread"
+| "userdata"
+| "buffer"
+| "vector"
+| string
+| (value: any) -> boolean)?
+
+tableHelper.mut = function(
 	value: any,
-	typeNameOrChecker: "string"
-		| "number"
-		| "boolean"
-		| "table"
-		| "function"
-		| "nil"
-		| "thread"
-		| "userdata"
-		| "buffer"
-		| "vector"
-		| string
-		| (value: any) -> boolean
+	typeNameOrChecker: TypeNameOrChecker
 ): any
 	if not tableHelper.strictEnabled then
 		return value
 	end
-	if type(typeNameOrChecker) ~= "string" or type(typeNameOrChecker) ~= "function" then
-		error(`First argument must be a string or function, got {typeof(value)}`)
+	if typeNameOrChecker ~= nil and type(typeNameOrChecker) ~= "string" and type(typeNameOrChecker) ~= "function" then
+		error(`Second argument must be a string or function or nil, got {typeof(value)}`)
 	end
+	-- selene: allow(shadowing)
+	local typeNameOrChecker = typeNameOrChecker or typeof(value)
 	return {
 		[privateKey] = typeNameOrChecker,
 		v = value,
 	}
-end
-
-tableHelper.strictEnabled = true
+end :: (<T>(value: T, typeNameOrChecker: nil) -> T) & ((value: any, typeNameOrChecker: TypeNameOrChecker) -> any)
 
 if _G.LUA_ENV == "roblox" then
 	local HttpService = game:GetService("HttpService")
