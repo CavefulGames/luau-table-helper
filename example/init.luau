@@ -22,4 +22,13 @@ end
 local class = Class.new()
 class:doSomething()
 class:delete()
-class:doSomething()
+--class:doSomething()
+
+local s = tableHelper.strict({
+	count = tableHelper.mut(0),
+	name = "hello",
+})
+s.count += 2
+print(s.count)
+print(s.name)
+s.name = "ez"
