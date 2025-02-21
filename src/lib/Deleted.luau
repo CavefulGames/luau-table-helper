@@ -3,6 +3,7 @@ export type Deleted<T> = typeof(setmetatable(
 		_mt: {}?,
 		impl: { __index: any? },
 		name: string,
+		traceback: string,
 	},
 	{} :: DeletedImpl
 ))
@@ -69,6 +70,7 @@ function Deleted.new(impl, name)
 	return setmetatable({
 		impl = impl,
 		name = name,
+		traceback = debug.traceback(nil, 2),
 	}, Deleted)
 end
 
@@ -76,8 +78,9 @@ function Deleted.setmetatable(self, constructed)
 	local mt = self._mt
 	if not mt then
 		local newMt = table.clone(self.impl)
+		local traceback = debug.traceback(nil, 2)
 		local err = function()
-			return error(`Attempt to call a method of a deleted object '{self.name}'`, 2)
+			return error(`Attempt to call a method of a deleted object '{self.name}'\n'{self.name}' was deleted in '{traceback}' and this Deleted was declared in '{self.traceback}'`, 2)
 		end
 
 		for key, value in newMt do
