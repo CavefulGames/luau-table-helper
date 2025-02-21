@@ -27,7 +27,7 @@ class:delete()
 local s = tableHelper.strict({
 	count = tableHelper.mut(0),
 	name = "hello",
-})
+}, "MyTable")
 s.count += 2
 print(s.count)
 print(s.name)
