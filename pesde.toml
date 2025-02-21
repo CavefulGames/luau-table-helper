@@ -5,6 +5,7 @@ authors = ["jiwonz <me@jiwonz.kr>", "Stephen Leitnick"]
 repository = "https://github.com/CavefulGames/table-helper-luau"
 license = "MIT"
 includes = ["src/**", "LICENSE", "pesde.toml", "README.md"]
+private = true
 
 [target]
 environment = "lune"
@@ -13,7 +14,11 @@ lib = "src/lib/init.luau"
 [indices]
 default = "https://github.com/pesde-pkg/index"
 
+[engines]
+lune = "^0.8.9"
+pesde = "^0.6.0-rc.8"
+
 [dev_dependencies]
 luau_check = { name = "jiwonz/luau_check", version = "^0.3.5" }
-multitarget = { name = "jiwonz/multitarget", version = "^0.4.0-rc.20" }
+multitarget = { name = "jiwonz/multitarget", version = "^0.4.0-rc.22" }
 darklua = { name = "pesde/darklua", version = "^0.16.0" }
