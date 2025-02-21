@@ -11,7 +11,7 @@ pesde add caveful_games/table_helper
 This library is zero dependency. so this can be installed via git submodule or also vendoring works fine.
 
 ## TO-DOs
-- [ ] Publish for Roblox (Setup multitarget)
+- [x] Publish for Roblox (Setup multitarget)
 - [x] Add `tableHelper.Deleted`
 - [x] Add Roblox-specific utilities (related to `HttpServer:JSONEn/Decode` like RbxUtil's TableUtil and list of `Player`s)
 - [ ] Add docs through moonwave (Generate into markdown and publish)
