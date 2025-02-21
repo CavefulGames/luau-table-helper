@@ -1,7 +1,11 @@
 local Store = require("./Store")
 local Deleted = require("./Deleted")
+local privateKey = require("./privateKey")
+local StrictTable = require("./StrictTable")
 
 local inext = ipairs({})
+local namePrivateKey = StrictTable[privateKey][1]
+local tracebackPrivateKey = StrictTable[privateKey][2]
 
 export type Store<T, K> = Store.Store<T, K>
 export type Deleted<T> = Deleted.Deleted<T>
@@ -162,6 +166,161 @@ function tableHelper.get(t: {}, path: { any }): any?
 	return current[path[#path]]
 end
 
+--[=[
+	@within tableHelper
+
+	Creates a strict table immutable by default.
+
+	```lua
+	tableHelper.strictEnabled = _G.__DEV__ -- To disable strict tables in production
+	local t = tableHelper.strict({
+		count = 0,
+		message = tableHelper.mut("hello") :: string,
+	})
+
+	t.count += 1 -- Not allowed
+	t.message = "world" -- Ok
+	t.message = 10 -- Not allowed
+	```
+]=]
+function tableHelper.strict<T>(tbl: T, name: string): T
+	if type(tbl) ~= "table" then
+		error(`First argument must be a table, got {typeof(tbl)}`)
+	end
+	if type(name) ~= "string" then
+		error(`Second argument must be a string, got {typeof(name)}`)
+	end
+	-- if getmetatable(tbl) ~= nil then
+	-- 	error("A table with a metatable cannot be a strict table")
+	-- end
+
+	if not tableHelper.strictEnabled then
+		return tbl
+	end
+
+-- 	local traceback = debug.traceback()
+-- 	local err = function()
+-- 		return error(
+-- 			`Attempted to access the strict table '{name}' incorrectly.\
+-- This strict table was created at '{traceback}'.\
+-- Ensure you are not trying to mutate an immutable field or access an invalid key.`,
+-- 			2
+-- 		)
+-- 	end
+
+	return setmetatable({
+		[privateKey] = tbl,
+		[namePrivateKey] = name :: any,
+		[tracebackPrivateKey] = debug.traceback(nil, 2) :: any,
+	}, StrictTable) :: any -- lying to the type checker :D
+end
+
+function tableHelper.mut(
+	value: any,
+	typeNameOrChecker: "string"
+		| "number"
+		| "boolean"
+		| "table"
+		| "function"
+		| "nil"
+		| "thread"
+		| "userdata"
+		| "buffer"
+		| "vector"
+		| string
+		| (value: any) -> boolean
+): any
+	if not tableHelper.strictEnabled then
+		return value
+	end
+	if type(typeNameOrChecker) ~= "string" or type(typeNameOrChecker) ~= "function" then
+		error(`First argument must be a string or function, got {typeof(value)}`)
+	end
+	return {
+		[privateKey] = typeNameOrChecker,
+		v = value,
+	}
+end
+
+tableHelper.strictEnabled = true
+
+if _G.LUA_ENV == "roblox" then
+	local HttpService = game:GetService("HttpService")
+	local Players = game:GetService("Players")
+
+	local JSONEncode = HttpService.JSONEncode
+	local JSONDecode = HttpService.JSONDecode
+	local getPlayers = Players.GetPlayers
+
+	--[=[
+		@within tableHelper
+
+		Encodes a table into a JSON string.
+
+		```lua
+		local t = {a = 10, b = 20}
+		local json = tableHelper.encodeJSON(t)
+		print(json) --> '{"a": 10, "b": 20}'
+		```
+
+		:::note
+
+		Available on `Roblox` only.
+
+		:::
+	]=]
+	function tableHelper.encodeJSON(value: any): string
+		return JSONEncode(HttpService, value)
+	end
+
+	--[=[
+		@within tableHelper
+
+		Decodes a JSON string into a table.
+
+		```lua
+		local json = '{"a": 10, "b": 20}'
+		local t = tableHelper.decodeJSON(json)
+		print(t) --> {a = 10, b = 20}
+		```
+
+		:::note
+
+		Available on `Roblox` only.
+
+		:::
+	]=]
+	function tableHelper.decodeJSON(json: string): any
+		return JSONDecode(HttpService, json)
+	end
+
+	--[=[
+		@within tableHelper
+
+		Returns a table of all players except the given player.
+
+		```lua
+		local players = tableHelper.getPlayersExcept(game.Players.LocalPlayer)
+		```
+
+		:::note
+
+		Available on `Roblox` only.
+
+		:::
+	]=]
+	function tableHelper.getPlayersExcept(player: Player): { Player }
+		local players = getPlayers(Players)
+		local playersExcept = table.create(#players - 1)
+		for _, p in players do
+			if p ~= player then
+				table.insert(playersExcept, p)
+			end
+		end
+		return playersExcept
+	end
+end
+
 -- TableUtil
 -- Stephen Leitnick
 -- September 13, 2017
@@ -175,9 +334,11 @@ end
 	passed to the function.
 
 	:::caution No cyclical references
+
 	Deep copies are _not_ protected against cyclical references. Passing
 	a table with cyclical references _and_ the `deep` parameter set to
 	`true` will result in a stack-overflow.
+
 	:::
 ]=]
 local function copy<T>(t: T, deep: boolean?): T
@@ -213,20 +374,22 @@ end
 	```
 
 	:::caution Data Loss Warning
+
 	This is a two-way sync, so the source table will have data
 	_removed_ that isn't found in the template table. This can
 	be problematic if used for player data, where there might
 	be dynamic data added that isn't in the template.
 
 	For player data, use `tableHelper.reconcile` instead.
+
 	:::
 ]=]
 local function sync<S, T>(srcTbl: S, templateTbl: T): T
 	if type(srcTbl) ~= "table" then
-		error("First argument must be a table")
+		error(`First argument must be a table, got {typeof(srcTbl)}`)
 	end
 	if type(templateTbl) ~= "table" then
-		error("Second argument must be a table")
+		error(`Second argument must be a table, got {typeof(templateTbl)}`)
 	end
 
 	local tbl = table.clone(srcTbl)
@@ -295,10 +458,10 @@ end
 ]=]
 local function reconcile<S, T>(src: S, template: T): S & T
 	if type(src) ~= "table" then
-		error("First argument must be a table")
+		error(`First argument must be a table, got {typeof(src)}`)
 	end
 	if type(template) ~= "table" then
-		error("Second argument must be a table")
+		error(`Second argument must be a table, got {typeof(template)}`)
 	end
 
 	local tbl = table.clone(src)
@@ -345,7 +508,9 @@ end
 	```
 
 	:::note Arrays only
+
 	This function works on arrays, but not dictionaries.
+
 	:::
 ]=]
 local function swapRemove<T>(t: { T }, i: number)
@@ -367,7 +532,9 @@ end
 	```
 
 	:::note Arrays only
+
 	This function works on arrays, but not dictionaries.
+
 	:::
 ]=]
 local function swapRemoveFirstValue<T>(t: { T }, v: T): number?
@@ -396,15 +563,17 @@ end
 ]=]
 local function map<T, M>(t: { T }, f: (T, number, { T }) -> M): { M }
 	if type(t) ~= "table" then
-		error("First argument must be a table")
+		error(`First argument must be a table, got {typeof(t)}`)
 	end
 	if type(f) ~= "function" then
-		error("Second argument must be a function")
+		error(`Second argument must be a function, got {typeof(f)}`)
 	end
+
 	local newT = table.create(#t)
 	for k, v in t do
 		newT[k] = f(v, k, t)
 	end
+
 	return newT
 end
 
@@ -426,11 +595,12 @@ end
 ]=]
 local function filter<T>(t: { T }, predicate: (T, any, { T }) -> boolean): { T }
 	if type(t) ~= "table" then
-		error("First argument must be a table")
+		error(`First argument must be a table, got {typeof(t)}`)
 	end
 	if type(predicate) ~= "function" then
-		error("Second argument must be a function")
+		error(`Second argument must be a function, got {typeof(predicate)}`)
 	end
+
 	local newT = table.create(#t)
 	if #t > 0 then
 		local n = 0
@@ -447,6 +617,7 @@ local function filter<T>(t: { T }, predicate: (T, any, { T }) -> boolean): { T }
 			end
 		end
 	end
+
 	return newT
 end
 
@@ -469,11 +640,12 @@ end
 ]=]
 local function reduce<T, R>(t: { T }, predicate: (R, T, any, { T }) -> R, init: R): R
 	if type(t) ~= "table" then
-		error("First argument must be a table")
+		error(`First argument must be a table, got {typeof(t)}`)
 	end
 	if type(predicate) ~= "function" then
-		error("Second argument must be a function")
+		error(`Second argument must be a function, got {typeof(predicate)}`)
 	end
+
 	local result = init :: R
 	if #t > 0 then
 		local start = 1
@@ -494,6 +666,7 @@ local function reduce<T, R>(t: { T }, predicate: (R, T, any, { T }) -> R, init: 
 			result = predicate(result, v, k, t)
 		end
 	end
+
 	return result
 end
 
@@ -533,7 +706,9 @@ end
 	```
 
 	:::note Arrays only
+
 	This function works on arrays, but not dictionaries.
+
 	:::
 ]=]
 local function extend<T, E>(target: { T }, extension: { E }): { T } & { E }
@@ -556,7 +731,9 @@ end
 	```
 
 	:::note Arrays only
+
 	This function works on arrays, but not dictionaries.
+
 	:::
 ]=]
 local function reverse<T>(tbl: { T }): { T }
@@ -580,18 +757,22 @@ end
 	```
 
 	:::note Arrays only
+
 	This function works on arrays, but not dictionaries.
+
 	:::
 ]=]
 local function shuffle<T>(tbl: { T }): { T }
 	if type(tbl) ~= "table" then
-		error("First argument must be a table")
+		error(`First argument must be a table, got {typeof(tbl)}`)
 	end
+
 	local shuffled = table.clone(tbl)
 	for i = #tbl, 2, -1 do
 		local j = math.random(1, i)
 		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
 	end
+
 	return shuffled
 end
 
@@ -607,15 +788,17 @@ end
 	```
 
 	:::note Arrays only
+
 	This function works on arrays, but not dictionaries.
+
 	:::
 ]=]
 local function sample<T>(tbl: { T }, size: number): { T }
 	if type(tbl) ~= "table" then
-		error("First argument must be a table")
+		error(`First argument must be a table, got {typeof(tbl)}`)
 	end
 	if type(size) ~= "number" then
-		error("Second argument must be a number")
+		error(`Second argument must be a number, got {typeof(size)}`)
 	end
 
 	-- If given table is empty, just return a new empty table:
@@ -655,7 +838,9 @@ end
 	```
 
 	:::note Arrays only
+
 	This function works on arrays, but not dictionaries.
+
 	:::
 ]=]
 local function flat<T>(tbl: { T }, depth: number?): { T }
@@ -689,7 +874,9 @@ end
 	```
 
 	:::note Arrays only
+
 	This function works on arrays, but not dictionaries.
+
 	:::
 ]=]
 local function flatMap<T, M>(tbl: { T }, callback: (T, number, { T }) -> M): { M }
@@ -708,12 +895,14 @@ end
 	```
 
 	:::caution Ordering
+
 	The ordering of the keys is never guaranteed. If order is imperative, call
 	`table.sort` on the resulting `keys` array.
 	```lua
 	local keys = tableHelper.keys(t)
 	table.sort(keys)
 	```
+
 	:::
 ]=]
 local function keys<K, V>(tbl: { [K]: V }): { K }
@@ -736,12 +925,14 @@ end
 	```
 
 	:::caution Ordering
+
 	The ordering of the values is never guaranteed. If order is imperative, call
 	`table.sort` on the resulting `values` array.
 	```lua
 	local values = tableHelper.values(t)
 	table.sort(values)
 	```
+
 	:::
 ]=]
 local function values<K, V>(tbl: { [K]: V }): { V }
@@ -775,9 +966,11 @@ end
 	```
 
 	:::caution Dictionary Ordering
+
 	While `find` can also be used with dictionaries, dictionary ordering is never
 	guaranteed, and thus the result could be different if there are more
 	than one possible matches given the data and callback function.
+
 	:::
 ]=]
 local function find<K, V>(tbl: { [K]: V }, callback: (V, K, { [K]: V }) -> boolean): (V?, K?)
@@ -886,6 +1079,7 @@ local function zip(...: { [any]: any }): ((t: { any }, k: any) -> (any, any), { 
 	if select("#", ...) <= 0 then
 		error("Must supply at least 1 table")
 	end
+
 	local function zipIteratorArray(all: { any }, k: number): (number?, { any }?)
 		k += 1
 		local valuesTbl = {}
@@ -899,6 +1093,7 @@ local function zip(...: { [any]: any }): ((t: { any }, k: any) -> (any, any), { 
 		end
 		return k, valuesTbl
 	end
+
 	local function zipIteratorMap(all: { [any]: any }, k: any): (number?, { any }?)
 		local valuesTbl = {}
 		for i, t in all do
@@ -911,6 +1106,7 @@ local function zip(...: { [any]: any }): ((t: { any }, k: any) -> (any, any), { 
 		end
 		return k, valuesTbl
 	end
+
 	local all = { ... }
 	if #all[1] > 0 then
 		return zipIteratorArray, all, 0
