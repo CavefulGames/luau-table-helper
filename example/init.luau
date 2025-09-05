@@ -1,4 +1,4 @@
-local tableHelper = require("../")
+local tableHelper = require("./src/lib")
 
 local Class = {}
 Class.__index = Class
