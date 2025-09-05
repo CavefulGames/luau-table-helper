@@ -4,7 +4,6 @@ local privateKey = require("./privateKey")
 local StrictTable = require("./StrictTable")
 local getTraceback = require("./getTraceback")
 
-local inext = ipairs({})
 local namePrivateKey = StrictTable[privateKey][1]
 local tracebackPrivateKey = StrictTable[privateKey][2]
 
@@ -115,8 +114,8 @@ end
 ]=]
 function tableHelper.arrayToSet<K>(arr: { K }): { [K]: boolean }
 	local set: { [K]: boolean } = {}
-	for _, v: K in inext :: any, arr do
-		set[v] = true
+	for i = 1, #arr do
+		set[arr[i]] = true
 	end
 	return set
 end
