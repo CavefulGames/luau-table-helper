@@ -56,29 +56,41 @@ function tableHelper.createKeyMap<T, K, V>(builder: (key: K) -> T & { [K]: V }):
 	return t
 end
 
---[=[
-	@within tableHelper
-
-	Creates a table where each key is also a value. This is useful for creating a map where the keys are also the values.
-
-	```lua
-	local nameMap = tableHelper.createNameMap(function(name)
-		return {
-			yourName = name -- name is "yourName"
-		}
-	end)
-	```
-]=]
-function tableHelper.createNameMap<T>(builder: (name: string) -> T & { [string]: string }): T
-	if type(builder) ~= "function" then
-		error("First argument must be a function")
-	end
-	local t = builder(true :: any)
-	for key, _ in t :: any do
-		(t :: any)[key] = key
+do
+	local function matchesString(value: any): (boolean, string?)
+		if type(value) ~= "string" then
+			return false, `NameMap's keys must be strings, got {typeof(value)}`
+		end
+		return true, nil
 	end
 
-	return t
+	--[=[
+		@within tableHelper
+
+		Creates a table where each key is also a value. This is useful for creating a map where the keys are also the values.
+
+		NameMap's keys must be strings.
+
+		```lua
+		local nameMap = tableHelper.createNameMap(function(name)
+			return {
+				yourName = name -- name is "yourName"
+			}
+		end)
+		```
+	]=]
+	function tableHelper.createNameMap<T>(builder: (name: string) -> T): T
+		if type(builder) ~= "function" then
+			error("First argument must be a function")
+		end
+		local t = builder(true :: any)
+		for key, _ in t :: any do
+			assert(matchesString(key));
+			(t :: any)[key] = key
+		end
+
+		return t
+	end
 end
 
 --[=[
