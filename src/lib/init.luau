@@ -278,6 +278,34 @@ tableHelper.mut = function(value: any, typeNameOrChecker: TypeNameOrChecker): an
 	}
 end :: (<T>(value: T, typeNameOrChecker: nil) -> T) & ((value: any, typeNameOrChecker: TypeNameOrChecker) -> any)
 
+--[=[
+	@within tableHelper
+
+	Performs a filter operation against the given table, which can be used to
+	filter out unwanted values from the table.
+
+	```lua
+	local t = {A = 10, B = 20, C = 30}
+
+	local t2 = tableHelper.where(t, function(value, key)
+		return value > 15
+	end)
+
+	print(t2) --> {B = 20, C = 30}
+	```
+]=]
+tableHelper.where = (
+	function<V, K>(tbl: { [K]: V }, predicate: (V, K) -> boolean): { [K]: V }
+		local result = {}
+		for key, value in tbl do
+			if predicate(value, key) then
+				result[key] = value
+			end
+		end
+		return result
+	end :: any
+) :: (<V, K>(tbl: { [K]: V }, predicate: (V, K) -> boolean) -> { [K]: V }) & (<V, K, C>(tbl: { [K]: V }, predicate: (C, K) -> boolean) -> { [K]: C })
+
 if _G.LUA_ENV == "roblox" then
 	local HttpService = game:GetService("HttpService")
 	local Players = game:GetService("Players")
@@ -1025,7 +1053,7 @@ end
 	```lua
 	local t = {10, 20, 40, 50, 60}
 
-	local allAboveZero = tableHelper.every(t, function(value)
+	local allAboveZero = tableHelper.every/all(t, function(value)
 		return value > 0
 	end)
 
@@ -1050,7 +1078,7 @@ end
 	```lua
 	local t = {10, 20, 40, 50, 60}
 
-	local someBelowTwenty = tableHelper.some(t, function(value)
+	local someBelowTwenty = tableHelper.some/any(t, function(value)
 		return value < 20
 	end)
 
@@ -1216,7 +1244,9 @@ tableHelper.keys = keys
 tableHelper.values = values
 tableHelper.find = find
 tableHelper.every = every
+tableHelper.all = every
 tableHelper.some = some
+tableHelper.any = some
 tableHelper.truncate = truncate
 tableHelper.zip = zip
 tableHelper.lock = lock
